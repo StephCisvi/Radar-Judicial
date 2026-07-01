@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Radar Judicial DH · Vista semanal</title>
+<style>
+:root{--ink:#1f3864;--muted:#5f6b7a;--pur:#5a4b82;--now:#c55a11;--now-bg:#fff4ec;--line:#e6e9ef;--bg:#f7f8fb}
+*{box-sizing:border-box}body{margin:0;font-family:'Segoe UI',Arial,sans-serif;color:#1c2430;background:var(--bg)}
+.wrap{max-width:1080px;margin:0 auto;padding:24px 18px 60px}
+h1{font-size:22px;color:var(--ink);margin:0 0 2px}.sub{color:var(--muted);font-size:13px;margin:0 0 6px}
+.src{font-size:11px;margin:0 0 16px}.src .ok{color:#2e7d5b}.src .fb{color:#c55a11}
+.bar{display:flex;flex-wrap:wrap;gap:10px;margin:0 0 22px}
+.pill{background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px 14px;flex:1;min-width:150px}
+.pill .k{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.pill .v{font-size:15px;color:var(--ink);font-weight:600;margin-top:3px}
+.pill.now{border-color:var(--now);background:var(--now-bg)}
+.milestones{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 26px}
+.ms{background:#fff;border:1px solid var(--line);border-left:4px solid var(--ink);border-radius:8px;padding:8px 12px;font-size:12px;min-width:150px}
+.ms.done{opacity:.5}.ms.done .cod{text-decoration:line-through}
+.ms .cod{font-weight:700;color:var(--ink)}.ms .dt{color:var(--muted)}
+.card{background:#fff;border:1px solid var(--line);border-radius:12px;margin:0 0 14px;overflow:hidden}
+.card.now{border:2px solid var(--now);box-shadow:0 4px 18px rgba(197,90,17,.13)}
+.card.past{opacity:.62}
+.head{display:flex;align-items:center;gap:12px;padding:12px 16px;background:#fbfcfe;border-bottom:1px solid var(--line);cursor:pointer}
+.card.now .head{background:var(--now-bg)}
+.wk{font-weight:700;color:var(--ink);font-size:15px;min-width:120px}
+.tag{font-size:11px;font-weight:600;padding:2px 9px;border-radius:20px;background:#eef1f7;color:var(--ink)}
+.tag.mu{background:#efeaf7;color:var(--pur)}.tag.now{background:var(--now);color:#fff}
+.hito{margin-left:auto;font-size:12px;font-weight:700;color:#c00000}
+.body{padding:6px 16px 14px;display:none;grid-template-columns:1fr 1fr;gap:6px 26px}
+.card.open .body{display:grid}
+.row{padding:7px 0;border-bottom:1px solid #f0f2f6}
+.row .l{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.03em;margin-bottom:2px}
+.row .t{font-size:13px;line-height:1.4}.full{grid-column:1/3}.io .t{color:#123}
+.chev{margin-left:8px;color:var(--muted);font-size:12px}
+.legend{font-size:12px;color:var(--muted);margin-top:8px}
+</style></head><body><div class="wrap">
+<h1>Radar Judicial DH · Vista semana por semana</h1>
+<p class="sub">Plan de trabajo E1 definitivo (29 jun 2026) · jul–oct 2026. La semana actual se detecta y resalta automáticamente. Clic en una semana para ver el detalle.</p>
+<p class="src" id="src"></p>
+<div class="bar" id="now-bar"></div>
+<div class="milestones" id="ms"></div>
+<div id="weeks"></div>
+<p class="legend">Fases: F0 Cimientos · F1 Concepto · F2 Método · F3 Automatización · F4 Cierre. ▸ handoff saliente · ◂ reporte de validación del desarrollador · ◈ cierre de iteración (4 productos mínimos).</p>
+<p class="legend"><b>Flujo de validación:</b> Pruebas internas de IO Justice, 'por paz mental': definimos y probamos los prompts internamente, se los pasamos al desarrollador (Educar Uno + OAJ), quien ejecuta sobre su infraestructura y nos devuelve el reporte de validación. Restricción: la API del OAJ procesa 1,000 sentencias por lote.</p>
+</div>
+<script>
+// ====== CONFIG: pega aquí el enlace CSV publicado del Google Sheet ======
+// (En Google Sheets: Archivo → Compartir → Publicar en la web → Hoja "Vista semanal" → CSV → Publicar. Copia el enlace .csv aquí)
+const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQxpeHNgsMl4ZkLhWva4JWrQbIZdw8UiMp0ycgYQXlzB7bv_e6aVfwin8yqO5HHblOZvosK4_R42x0L/pub?gid=54477633&single=true&output=csv";
+// =======================================================================
+const FALLBACK = {"weeks": [{"monday": "2026-06-29", "rango": "29 jun–3 jul", "fase": "F0→F1", "muestra": "Prep. Muestra 1 (gold set)", "resp": "IO Justice · DIG (aprob. E1)", "io": "Entregar E1 (30 jun ✅). Arrancar E2: taxonomía v1 de 4 niveles + codificación SKOS. Seleccionar la sentencia/muestra modelo.", "test": "Arranque: definición-construcción del sistema de pruebas internas (por paz mental).", "ins": "▸ Gold set M1 listo (cuadernillos CEC · Lote 0 ≤1000); criterio v0; taxonomía v0", "outs": "E1 → DIG", "reu": "Lunes: seguimiento DGTED/DIG", "hito": "◆ Entrega E1 (30 jun)"}, {"monday": "2026-07-06", "rango": "6–10 jul", "fase": "F1 Concepto", "muestra": "Muestra 1 · Gold set (arranque)", "resp": "IO Justice · OAJ DH (valida E1)", "io": "Desarrollo E2. Diccionario de equivalencias v0. Arquitectura de prompts v0 (para calibrar M1). Ficha por subderecho. Revisión de borradores E2 (semana 1).", "test": "Cierre de la definición del sistema de pruebas. Preparar el gold set (cuadernillos CEC).", "ins": "▸ Validación OAJ DH de E1 (≤5 d.h.)", "outs": "", "reu": "Lunes: seguimiento", "hito": ""}, {"monday": "2026-07-13", "rango": "13–17 jul", "fase": "F1 Concepto", "muestra": "Muestra 1 · Gold set (calibración)", "resp": "IO Justice · Desarrollador", "io": "Revisión de borradores E2 (semana 2) y cierre. Calibración interna de prompts vs. respuestas correctas; revisión de campos estables/inestables y de relaciones confiables/problemáticas.", "test": "Muestra 1 — calibración interna de prompts contra el gold set.", "ins": "", "outs": "▸ Prompts v0 → desarrollador (para que ejecute M1)", "reu": "Lunes: seguimiento (revisión de borrador E2). Inicia reportes de validación del desarrollador.", "hito": "◆ Entrega E2 (17 jul)"}, {"monday": "2026-07-20", "rango": "20–24 jul", "fase": "F1→F2", "muestra": "Muestra 1 · Gold set (validación)", "resp": "IO Justice · OAJ DH", "io": "Calibración de prompts (cont.). Gold set validado por doble verificación experta (interna). Diseño de la muestra estratificada (matriz Anexo 1: cuotas por materia/instancia/circuito, lotes de 1000, mercantil a la baja). Inicia desarrollo E3.", "test": "Muestra 1 — cierre de la calibración interna.", "ins": "▸ Validación OAJ DH de E2 (≤5 d.h.)", "outs": "▸ Universo M2 (matriz Anexo 1, Lotes 1–2) → desarrollador", "reu": "Lunes: seguimiento", "hito": ""}, {"monday": "2026-07-27", "rango": "27–31 jul", "fase": "F2 Método", "muestra": "Muestra 1 (cierre) → Muestra 2 (arranque)", "resp": "IO Justice · Desarrollador", "io": "Cierre de la Muestra 1. Tablero de medición v0 (métricas/umbrales). Desarrollo E3 (reglas de clasificación).", "test": "Muestra 2 — el desarrollador ejecuta los Lotes 1–2 (estratificada); recibimos el reporte de validación.", "ins": "▸ Gold set validado (doble verificación); ◂ reporte de validación del desarrollador (M1)", "outs": "▸ Prompts mejorados → desarrollador (M2)", "reu": "Lunes: seguimiento", "hito": "◈ Cierre M1 · 4 productos mínimos (corpus · errores · decisiones · pendientes)"}, {"monday": "2026-08-03", "rango": "3–7 ago", "fase": "F2 Método", "muestra": "Muestra 2 · Heterogénea", "resp": "IO Justice", "io": "Desarrollo E3 (reglas de codificación y vinculación). Revisión del reporte de validación de M2.", "test": "Muestra 2 — Lotes 1–2 en curso; revisamos el reporte del desarrollador.", "ins": "", "outs": "", "reu": "Lunes: seguimiento", "hito": ""}, {"monday": "2026-08-10", "rango": "10–14 ago", "fase": "F2 Método", "muestra": "Muestra 2 · Heterogénea", "resp": "IO Justice", "io": "Desarrollo E3. Preparar validación con juzgadoras.", "test": "Muestra 2 (cont.). Preparación del testing con juzgadoras.", "ins": "", "outs": "", "reu": "Lunes: seguimiento. ● Reunión de testing (gold set): explicar dinámica.", "hito": ""}, {"monday": "2026-08-17", "rango": "17–21 ago", "fase": "F2→F3", "muestra": "Muestra 2 · Heterogénea", "resp": "IO Justice", "io": "Revisión de borradores E3 (semana 1). Guía de anotación + catálogo de errores. Arranca desarrollo E4.", "test": "Muestra 2 (cont.).", "ins": "", "outs": "", "reu": "Lunes: seguimiento", "hito": ""}, {"monday": "2026-08-24", "rango": "24–28 ago", "fase": "F2 Método", "muestra": "Muestra 2 · Heterogénea", "resp": "IO Justice", "io": "Revisión de borradores E3 (semana 2). Corpus anotado.", "test": "Muestra 2 (cierre).", "ins": "", "outs": "", "reu": "Lunes: seguimiento (revisión de borrador E3)", "hito": ""}, {"monday": "2026-08-31", "rango": "31 ago–4 sep", "fase": "F2→F3", "muestra": "Muestra 2 (cierre) → Muestra 3 (arranque)", "resp": "IO Justice · DGETD · Desarrollador", "io": "Cerrar y entregar E3 (+ corpus anotado). Arranca ampliación de la muestra (Muestra 3).", "test": "Muestra 3 — preparación/ampliación (Lote 3); el desarrollador ejecuta y reporta.", "ins": "▸ Infra técnica confirmada (LLM/pipeline/Elasticsearch) — pre-PoC; ◂ reporte de validación del desarrollador (M2)", "outs": "E3 · ▸ Universo M3 (Lote 3) → desarrollador", "reu": "Lunes: seguimiento", "hito": "◆ Entrega E3 (31 ago) · ◈ Cierre M2 · 4 productos mínimos"}, {"monday": "2026-09-07", "rango": "7–11 sep", "fase": "F3 Automatización", "muestra": "Muestra 3 · Escalamiento", "resp": "IO Justice · OAJ DH", "io": "Desarrollo E4 (arquitectura de IA, biblioteca de prompts).", "test": "Muestra 3 — Lote 3 en preparación/ejecución.", "ins": "▸ Validación OAJ DH de E3 (≤5 d.h.)", "outs": "", "reu": "Lunes: seguimiento", "hito": ""}, {"monday": "2026-09-14", "rango": "14–18 sep", "fase": "F3 Automatización", "muestra": "Muestra 3 · Escalamiento", "resp": "IO Justice · Desarrollador", "io": "Desarrollo E4. Inicia M3 · PoC de extracción a escala con métricas. Tablero de medición a escala.", "test": "Muestra 3 — PoC de extracción a escala con métricas.", "ins": "", "outs": "", "reu": "Lunes: seguimiento", "hito": ""}, {"monday": "2026-09-21", "rango": "21–25 sep", "fase": "F3 Automatización", "muestra": "Muestra 3 · Escalamiento", "resp": "IO Justice · Desarrollador", "io": "Revisión de borradores E4 (semana 1). PoC métricas.", "test": "Muestra 3 — PoC de extracción a escala con métricas.", "ins": "", "outs": "", "reu": "Lunes: seguimiento", "hito": ""}, {"monday": "2026-09-28", "rango": "28 sep–2 oct", "fase": "F3→F4", "muestra": "Muestra 3 · Escalamiento", "resp": "IO Justice · Desarrollador", "io": "Revisión de borradores E4 (semana 2) y cierre.", "test": "Muestra 3 — PoC con métricas; recibimos reporte de validación del desarrollador.", "ins": "◂ Reporte de validación del desarrollador (M3)", "outs": "E4", "reu": "Lunes: seguimiento (revisión de borrador E4)", "hito": "◆ Entrega E4 (30 sep)"}, {"monday": "2026-10-05", "rango": "5–9 oct", "fase": "F4 Cierre", "muestra": "Muestra 3 · Escalamiento", "resp": "IO Justice · OAJ DH", "io": "Desarrollo de E5 (informe final, hoja de ruta).", "test": "Muestra 3 — PoC de extracción a escala con métricas (cont.).", "ins": "▸ Validación OAJ DH de E4 (≤5 d.h.)", "outs": "", "reu": "Lunes: seguimiento", "hito": ""}, {"monday": "2026-10-12", "rango": "12–16 oct", "fase": "F4 Cierre", "muestra": "Muestra 3 · Escalamiento", "resp": "IO Justice", "io": "Desarrollo de E5. Consolidación de resultados y métricas.", "test": "Muestra 3 — cierre de PoC.", "ins": "", "outs": "", "reu": "Lunes: seguimiento", "hito": ""}, {"monday": "2026-10-19", "rango": "19–23 oct", "fase": "F4 Cierre", "muestra": "—", "resp": "IO Justice", "io": "Revisión de borradores E5 (semana 1).", "test": "Consolidación de evidencia de pruebas.", "ins": "", "outs": "", "reu": "Lunes: seguimiento", "hito": ""}, {"monday": "2026-10-26", "rango": "26–30 oct", "fase": "F4 Cierre", "muestra": "—", "resp": "IO Justice · OAJ DH / DIG", "io": "Revisión de borradores E5 (semana 2) y cierre.", "test": "Cierre documental de pruebas.", "ins": "", "outs": "E5 · ▸ Validación OAJ DH de E5 (≤5 d.h.) / aprobación DIG", "reu": "Lunes: seguimiento (revisión de borrador E5)", "hito": "◆ Entrega E5 (30 oct) · ◈ Cierre M3 · 4 productos mínimos"}], "entregables": [{"cod": "E1", "prod": "Plan de trabajo para la construcción taxonómica y desarrollo metodológico", "fecha": "30/06/2026", "iso": "2026-06-30"}, {"cod": "E2", "prod": "Documento conceptual de la taxonomía de derechos humanos", "fecha": "17/07/2026", "iso": "2026-07-17"}, {"cod": "E3", "prod": "Documento metodológico para la clasificación y análisis de información", "fecha": "31/08/2026", "iso": "2026-08-31"}, {"cod": "E4", "prod": "Documento con la arquitectura de IA y reglas de análisis automatizado", "fecha": "30/09/2026", "iso": "2026-09-30"}, {"cod": "E5", "prod": "Informe final de la taxonomía y metodología", "fecha": "30/10/2026", "iso": "2026-10-30"}]};
+
+function parseCSV(t){
+  const rows=[];let f='',row=[],q=false;
+  for(let i=0;i<t.length;i++){const c=t[i];
+    if(q){ if(c=='"'){ if(t[i+1]=='"'){f+='"';i++;} else q=false; } else f+=c; }
+    else { if(c=='"')q=true; else if(c==','){row.push(f);f='';} else if(c=='\n'){row.push(f);rows.push(row);row=[];f='';} else if(c=='\r'){} else f+=c; }
+  }
+  if(f.length||row.length){row.push(f);rows.push(row);}
+  return rows.filter(r=>r.length>1||r[0]);
+}
+function toISO(s){ s=(s||'').trim(); let m=s.match(/^(\d{4})-(\d{2})-(\d{2})/); if(m)return m[1]+'-'+m[2]+'-'+m[3];
+  m=s.match(/^(\d{1,2})[\/](\d{1,2})[\/](\d{4})/); if(m)return m[3]+'-'+('0'+m[1]).slice(-2)+'-'+('0'+m[2]).slice(-2);
+  const d=new Date(s); return isNaN(d)?'':d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2); }
+function fromCSV(txt){
+  const rows=parseCSV(txt);
+  let hi=rows.findIndex(r=>r.some(c=>{const x=(c||'').trim().toLowerCase();return x==='lunes'||x==='fecha_lunes'||x==='fase';}));
+  if(hi<0)hi=0;
+  const h=rows[hi].map(x=>(x||'').trim().toLowerCase());
+  const col=(...ks)=>{for(const k of ks){const i=h.findIndex(x=>x.includes(k));if(i>=0)return i;}return -1;};
+  const cD=col('lunes','fecha'),cS=col('semana'),cF=col('fase'),cM=col('muestra'),cRe=col('responsable','resp'),
+    cIO=col('actividad','io'),cT=col('prueba'),cIn=col('entra'),cOut=col('sale'),cR=col('reuni'),cH=col('hito');
+  const g=(r,i)=>(i>=0&&r[i]!=null)?r[i]:'';
+  const drows=rows.slice(hi+1).filter(r=>(g(r,cD)||'').trim()!=='');
+  const weeks=drows.map((r,idx)=>{
+    const raw=(g(r,cD)||'').trim(); const iso=raw.match(/^\d{4}-\d{2}-\d{2}/); const fb=FALLBACK.weeks[idx];
+    return { monday: iso?iso[0]:(fb?fb.monday:toISO(raw)), rango:g(r,cS)||(fb?fb.rango:''),
+      fase:g(r,cF), muestra:g(r,cM), resp:g(r,cRe), io:g(r,cIO), test:g(r,cT),
+      ins:g(r,cIn), outs:g(r,cOut), reu:g(r,cR), hito:g(r,cH) };
+  });
+  return {weeks, entregables:FALLBACK.entregables};
+}
+function localISO(d){return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);}
+function addDaysISO(iso,n){const p=iso.split('-');const d=new Date(+p[0],+p[1]-1,+p[2]);d.setDate(d.getDate()+n);return localISO(d);}
+function render(DATA, srcMsg){
+  document.getElementById('src').innerHTML=srcMsg;
+  const today=new Date(); const todayISO=localISO(today);
+  let curIdx=DATA.weeks.findIndex(w=>w.monday&&todayISO>=w.monday&&todayISO<=addDaysISO(w.monday,6));
+  if(curIdx<0){curIdx=DATA.weeks.findIndex(w=>w.monday>=todayISO);if(curIdx<0)curIdx=DATA.weeks.length-1;}
+  const cur=DATA.weeks[curIdx];
+  document.getElementById('now-bar').innerHTML=
+   `<div class="pill now"><div class="k">Semana actual</div><div class="v">${cur.rango}</div></div>`+
+   `<div class="pill"><div class="k">Fase</div><div class="v">${cur.fase}</div></div>`+
+   `<div class="pill"><div class="k">Muestra activa</div><div class="v">${cur.muestra}</div></div>`+
+   `<div class="pill"><div class="k">Hito de la semana</div><div class="v">${cur.hito||'—'}</div></div>`;
+  document.getElementById('ms').innerHTML=(DATA.entregables||[]).map(e=>{
+    const done=new Date(e.iso)<today;
+    return `<div class="ms ${done?'done':''}"><span class="cod">${e.cod}</span> · <span class="dt">${e.fecha}</span><br>${e.prod.slice(0,46)}${e.prod.length>46?'…':''}</div>`;}).join('');
+  document.getElementById('weeks').innerHTML=DATA.weeks.map((w,k)=>{
+    const st=k<curIdx?'past':(k===curIdx?'now':'future');const open=k===curIdx?'open':'';
+    const tag=k===curIdx?'<span class="tag now">ACTUAL</span>':(k<curIdx?'<span class="tag">pasada</span>':'<span class="tag">próxima</span>');
+    return `<div class="card ${st} ${open}"><div class="head" onclick="this.parentNode.classList.toggle('open')">
+      <span class="wk">${w.rango}</span>${tag}<span class="tag">${w.fase}</span><span class="tag mu">${w.muestra}</span>
+      ${w.hito?`<span class="hito">${w.hito}</span>`:''}<span class="chev">▾</span></div>
+      <div class="body">
+        <div class="row full"><div class="l">Responsable</div><div class="t">${w.resp||'—'}</div></div>
+        <div class="row io full"><div class="l">Actividades IO Justice</div><div class="t">${w.io}</div></div>
+        <div class="row full"><div class="l">Pruebas internas</div><div class="t">${w.test}</div></div>
+        <div class="row"><div class="l">Insumo que entra</div><div class="t">${w.ins||'—'}</div></div>
+        <div class="row"><div class="l">Insumo que sale</div><div class="t">${w.outs||'—'}</div></div>
+        <div class="row full"><div class="l">Reuniones</div><div class="t">${w.reu}</div></div>
+      </div></div>`;}).join('');
+  setTimeout(()=>{const el=document.querySelector('.card.now');if(el)el.scrollIntoView({behavior:'smooth',block:'center'});},250);
+}
+(async function(){
+  if(SHEET_CSV_URL){
+    try{ const r=await fetch(SHEET_CSV_URL,{cache:'no-store'}); if(!r.ok)throw 0; const txt=await r.text();
+      const D=fromCSV(txt); if(D.weeks.length){ render(D,'Datos en vivo desde Google Sheets · <span class="ok">conectado</span>'); return; } }
+    catch(e){ render(FALLBACK,'No se pudo leer el Google Sheet · <span class="fb">usando datos incrustados</span>'); return; }
+  }
+  render(FALLBACK, SHEET_CSV_URL?'':'Datos incrustados (sin Google Sheet conectado)');
+})();
+</script></body></html>
